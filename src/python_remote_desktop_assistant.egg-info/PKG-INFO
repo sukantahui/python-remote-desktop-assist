@@ -1,0 +1,90 @@
+Metadata-Version: 2.4
+Name: python-remote-desktop-assistant
+Version: 1.0.0
+Summary: High-Performance Python Remote Desktop (AnyDesk-style) with Multimodal Generative AI Copilot
+Author: AI Engineering Team
+License: MIT
+Requires-Python: >=3.11
+Description-Content-Type: text/markdown
+Requires-Dist: fastapi>=0.111.0
+Requires-Dist: uvicorn[standard]>=0.30.0
+Requires-Dist: websockets>=12.0
+Requires-Dist: aiortc>=1.9.0
+Requires-Dist: pydantic>=2.7.0
+Requires-Dist: pydantic-settings>=2.2.0
+Requires-Dist: mss>=9.0.1
+Requires-Dist: pyautogui>=0.9.54
+Requires-Dist: pynput>=1.7.6
+Requires-Dist: sounddevice>=0.4.6
+Requires-Dist: numpy>=1.26.4
+Requires-Dist: opencv-python-headless>=4.9.0.80
+Requires-Dist: pillow>=10.3.0
+Requires-Dist: google-genai>=0.1.1
+Requires-Dist: loguru>=0.7.2
+Requires-Dist: pyyaml>=6.0.1
+
+# 🚀 AI-Powered Remote Desktop Assistant (AnyDesk Paradigm)
+
+> A next-generation, high-performance **Python-based Remote Desktop application** featuring an integrated **Multimodal Generative AI Copilot ("Computer Use")**, AnyDesk-style 9-digit Device ID pairing, low-latency screen streaming, and human-in-the-loop safety guardrails.
+
+---
+
+## 📖 Authoritative Project Documentation
+
+All system designs, technical specifications, and architectural blueprints are organized under the [`doc/`](file:///e:/python%20remote%20desktop%20assitant/doc) folder:
+
+| Document | Description |
+| :--- | :--- |
+| 🏗️ [**`doc/system_architecture.md`**](file:///e:/python%20remote%20desktop%20assitant/doc/system_architecture.md) | High-level AnyDesk topology, Rendezvous P2P/Relay server, WebRTC channels, AI OODA loop, and security architecture. |
+| 📋 [**`doc/feature_specifications.md`**](file:///e:/python%20remote%20desktop%20assitant/doc/feature_specifications.md) | Feature matrix, 9-digit Device ID, split-pane file transfer, multimodal AI autonomous agent, voice assistant, and acceptance criteria. |
+| ⚙️ [**`doc/tech_stack_and_engine.md`**](file:///e:/python%20remote%20desktop%20assitant/doc/tech_stack_and_engine.md) | Complete Python library manifest (`FastAPI`, `aiortc`, `bettercam`, `google-genai`, `pywin32`, `pydantic`), and hardware acceleration specs. |
+| 🎨 [**`doc/ui_ux_design.md`**](file:///e:/python%20remote%20desktop%20assitant/doc/ui_ux_design.md) | Cyber-Glassmorphism dark theme tokens, Home Dashboard wireframes, in-session AnyDesk floating toolbar, and AI reasoning HUD. |
+| 🧪 [**`doc/testing_and_verification.md`**](file:///e:/python%20remote%20desktop%20assitant/doc/testing_and_verification.md) | Verification pyramid, unit tests, synthetic headless OS mock harness, AI visual grounding benchmarks, and security audits. |
+| 🤖 [**`AGENTS.md`**](file:///e:/python%20remote%20desktop%20assitant/AGENTS.md) | Mandatory operating guidelines and conventions for any AI agent or developer building on this repository. |
+
+---
+
+## 🌟 Key Highlights
+
+- **AnyDesk-Style P2P Connectivity**: 9-digit Device ID (e.g. `982 411 723`), zero-configuration NAT traversal via WebRTC STUN/TURN, and instant unattended access.
+- **Hardware-Accelerated Screen Streaming**: DXGI Desktop Duplication (`bettercam`/`mss`) delivering up to 60 FPS 1080p with sub-100ms latency.
+- **Multimodal AI Desktop Copilot ("Computer Use")**: Powered by Google Gemini 2.5/1.5 Pro/Flash, Claude 3.5 Sonnet, and Local Vision Models. Translates natural language goals into precise OS GUI actions (clicks, typing, shortcuts).
+- **Split-Pane File Transfer**: AnyDesk-style dual-pane remote file manager with drag-and-drop and AI-powered document summarization.
+- **In-Session Toolbar**: Remote display switcher, view scaling (1:1 / fit), native OS controls (`Ctrl+Alt+Del`, Lock), and emergency kill-switch (`Esc + Esc`).
+- **Safety First & Privacy Shield**: Automatic blurring of sensitive fields (passwords/banking), three-tier risk action approval (Human-in-the-Loop), and signed audit logs.
+
+---
+
+## 🛠️ Quick Start
+
+### 1. Prerequisites
+- Python 3.11 or higher
+- Windows 10/11 (for DXGI / Win32 hardware acceleration) or Linux / macOS
+
+### 2. Installation
+```bash
+# Clone the repository
+git clone <repo-url>
+cd "python remote desktop assitant"
+
+# Create and activate virtual environment
+python -m venv venv
+.\venv\Scripts\Activate.ps1
+
+# Install dependencies
+pip install -r requirements.txt
+```
+
+### 3. Configuration
+```bash
+# Copy example environment file
+cp .env.example .env
+
+# Edit .env and supply your Gemini / Anthropic / OpenAI API key
+```
+
+### 4. Running the Application
+```bash
+# Launch the AnyDesk-style Remote Desktop Host & Client GUI
+python src/main.py
+```

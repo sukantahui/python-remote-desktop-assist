@@ -1,0 +1,40 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "python-remote-desktop-assistant"
+version = "1.0.0"
+description = "High-Performance Python Remote Desktop (AnyDesk-style) with Multimodal Generative AI Copilot"
+authors = [{ name = "AI Engineering Team" }]
+license = { text = "MIT" }
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.111.0",
+    "uvicorn[standard]>=0.30.0",
+    "websockets>=12.0",
+    "aiortc>=1.9.0",
+    "pydantic>=2.7.0",
+    "pydantic-settings>=2.2.0",
+    "mss>=9.0.1",
+    "pyautogui>=0.9.54",
+    "pynput>=1.7.6",
+    "sounddevice>=0.4.6",
+    "numpy>=1.26.4",
+    "opencv-python-headless>=4.9.0.80",
+    "pillow>=10.3.0",
+    "google-genai>=0.1.1",
+    "loguru>=0.7.2",
+    "pyyaml>=6.0.1"
+]
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+addopts = "-ra -q --asyncio-mode=auto"
+testpaths = [
+    "tests",
+]
+pythonpath = [
+    "src"
+]

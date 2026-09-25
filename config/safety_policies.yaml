@@ -1,0 +1,41 @@
+# Safety and Human-In-The-Loop Policy Matrix
+version: "1.0"
+
+risk_tiers:
+  tier_1_safe:
+    auto_approve: true
+    description: "Read-only and benign navigation actions"
+    actions:
+      - mouse_move
+      - mouse_scroll
+      - wait
+      - take_screenshot
+      - read_active_window
+
+  tier_2_moderate:
+    auto_approve: true
+    preview_delay_seconds: 1.0
+    description: "Standard typing and window navigation"
+    actions:
+      - mouse_click
+      - type_text
+      - key_press
+      - switch_window
+
+  tier_3_high_risk:
+    auto_approve: false
+    requires_user_confirmation: true
+    description: "Destructive file ops, system config changes, terminal commands, purchases"
+    forbidden_patterns:
+      - "rm -rf"
+      - "del /f"
+      - "format "
+      - "reg delete"
+      - "drop database"
+      - "curl | sh"
+      - "powershell -enc"
+    actions:
+      - execute_shell_command
+      - delete_file
+      - modify_system_settings
+      - credit_card_input

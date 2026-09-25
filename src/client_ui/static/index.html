@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Antigravity Desk AI — Remote Desktop Assistant</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Top Navigation Header -->
+    <header class="navbar">
+        <div class="nav-brand">
+            <div class="logo-icon">⚡</div>
+            <div class="logo-text">ANTIGRAVITY <span>DESK AI</span></div>
+            <div class="version-badge">v1.0 AnyDesk Engine</div>
+        </div>
+
+        <div class="nav-telemetry">
+            <div class="pill status-pill">
+                <span class="dot pulse-green"></span>
+                <span id="telemetry-status">Online (Host Ready)</span>
+            </div>
+            <div class="pill">
+                <span class="pill-label">FPS:</span>
+                <span id="telemetry-fps" class="pill-val">30</span>
+            </div>
+            <div class="pill">
+                <span class="pill-label">Ping:</span>
+                <span id="telemetry-ping" class="pill-val">12 ms</span>
+            </div>
+            <div class="pill">
+                <span class="pill-label">🔒</span>
+                <span class="pill-val">DTLS-SRTP</span>
+            </div>
+        </div>
+
+        <div class="nav-actions">
+            <button id="btn-killswitch" class="btn btn-danger">🛑 EMERGENCY STOP</button>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="main-layout">
+        <!-- View 1: Home Dashboard -->
+        <section id="view-dashboard" class="dashboard-view">
+            <div class="grid-2col">
+                <!-- This Desk (Host Machine) -->
+                <div class="glass-card this-desk-card">
+                    <div class="card-header">
+                        <span class="badge badge-accent">THIS DESK</span>
+                        <h2>Your Device Address</h2>
+                    </div>
+                    <p class="card-desc">Share this 9-digit address to allow remote control or AI delegation on this PC.</p>
+                    
+                    <div class="id-display-box">
+                        <span id="local-desk-id" class="desk-id">982 411 723</span>
+                        <button id="btn-copy-id" class="btn btn-secondary">📋 Copy</button>
+                    </div>
+
+                    <div class="permissions-toggle-group">
+                        <label class="toggle-item">
+                            <input type="checkbox" checked id="perm-input"> Allow Remote Mouse & Keyboard
+                        </label>
+                        <label class="toggle-item">
+                            <input type="checkbox" checked id="perm-ai"> Allow Multimodal AI Copilot ("Computer Use")
+                        </label>
+                        <label class="toggle-item">
+                            <input type="checkbox" checked id="perm-hitl"> Enforce Human-in-the-Loop Confirmation
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Remote Desk (Connect to PC) -->
+                <div class="glass-card remote-desk-card">
+                    <div class="card-header">
+                        <span class="badge badge-primary">REMOTE DESK</span>
+                        <h2>Connect to Remote Machine</h2>
+                    </div>
+                    <p class="card-desc">Enter the 9-digit Desk ID of the computer you want to view and automate.</p>
+                    
+                    <div class="connect-input-group">
+                        <input type="text" id="remote-id-input" placeholder="e.g. 982 411 723" class="input-field id-input" value="982 411 723">
+                        <button id="btn-connect" class="btn btn-primary">⚡ Connect Desk</button>
+                    </div>
+
+                    <div class="quick-ai-box">
+                        <label>Or Delegate Autonomous Task Directly:</label>
+                        <div class="ai-input-wrapper">
+                            <input type="text" id="dashboard-ai-goal" placeholder="e.g. 'Open browser, search stock prices, and save to Excel'" class="input-field">
+                            <button id="btn-dashboard-ai" class="btn btn-ai">🤖 Run AI Task</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Sessions -->
+            <div class="recent-sessions-section">
+                <h3>Recent Connected Desks</h3>
+                <div class="recent-grid">
+                    <div class="recent-card" onclick="connectToDesk('982 411 723')">
+                        <div class="recent-pc-icon">💻</div>
+                        <div class="recent-info">
+                            <strong>This Machine (Local Loop)</strong>
+                            <span>ID: 982 411 723 • Ready</span>
+                        </div>
+                        <span class="badge badge-success">Online</span>
+                    </div>
+                    <div class="recent-card">
+                        <div class="recent-pc-icon">🖥️</div>
+                        <div class="recent-info">
+                            <strong>Workstation-Win11</strong>
+                            <span>ID: 412 890 125 • 24ms</span>
+                        </div>
+                        <span class="badge badge-outline">Available</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- View 2: Active Remote Desktop Session View -->
+        <section id="view-session" class="session-view hidden">
+            <!-- In-Session AnyDesk Toolbar -->
+            <div class="session-toolbar">
+                <div class="toolbar-group">
+                    <button class="tool-btn" id="tool-monitors">🖥️ Monitor 1 ▾</button>
+                    <button class="tool-btn" id="tool-view">🔍 100% Fit</button>
+                    <button class="tool-btn" id="tool-file">📁 File Manager</button>
+                    <button class="tool-btn" id="tool-actions">⚡ Actions ▾</button>
+                </div>
+                <div class="toolbar-center">
+                    <span class="session-title" id="active-session-label">Desk: 982 411 723</span>
+                </div>
+                <div class="toolbar-group">
+                    <button class="tool-btn btn-ai-toggle active" id="btn-toggle-ai-sidebar">🤖 AI Copilot HUD</button>
+                    <button class="tool-btn btn-disconnect" id="btn-disconnect">❌ Disconnect</button>
+                </div>
+            </div>
+
+            <!-- Main Session Split Area -->
+            <div class="session-workspace">
+                <!-- Video Screen Canvas -->
+                <div class="canvas-container" id="canvas-container">
+                    <canvas id="screen-canvas"></canvas>
+                    <div id="ai-gaze-pointer" class="gaze-reticle hidden"></div>
+                </div>
+
+                <!-- Right-Docked AI Copilot Sidebar -->
+                <aside class="ai-copilot-sidebar" id="ai-sidebar">
+                    <div class="sidebar-header">
+                        <h3>🤖 AI Copilot ("Computer Use")</h3>
+                        <span class="badge badge-ai">Gemini 2.5 Active</span>
+                    </div>
+
+                    <!-- Task Input -->
+                    <div class="copilot-input-box">
+                        <textarea id="ai-task-input" placeholder="Type what you want the AI to do on this PC... (e.g. 'Open Spotify and play Jazz')"></textarea>
+                        <div class="input-actions">
+                            <button id="btn-voice-ptt" class="btn btn-secondary">🎙️ Voice</button>
+                            <button id="btn-run-ai" class="btn btn-ai">▶️ Execute</button>
+                        </div>
+                    </div>
+
+                    <!-- Live Execution Reasoning Trace -->
+                    <div class="trace-container">
+                        <div class="trace-header">
+                            <span>Step-by-Step Reasoning Trace</span>
+                            <button id="btn-clear-trace" class="btn-text">Clear</button>
+                        </div>
+                        <div id="trace-logs" class="trace-logs">
+                            <div class="trace-item system-msg">
+                                <span class="trace-time">System</span>
+                                <p>AI Copilot initialized. Ready to observe screen and execute goals.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Human-in-the-Loop Confirmation Card (Dynamic) -->
+                    <div id="hitl-card" class="hitl-card hidden">
+                        <div class="hitl-header">
+                            <span>⚠️ HITL Approval Required</span>
+                        </div>
+                        <p id="hitl-text">AI requests permission to execute step.</p>
+                        <div class="hitl-actions">
+                            <button id="btn-hitl-reject" class="btn btn-danger-sm">Reject</button>
+                            <button id="btn-hitl-approve" class="btn btn-success-sm">Approve Action</button>
+                        </div>
+                    </div>
+                </aside>
+            </div>
+        </section>
+    </main>
+
+    <script src="app.js"></script>
+</body>
+</html>

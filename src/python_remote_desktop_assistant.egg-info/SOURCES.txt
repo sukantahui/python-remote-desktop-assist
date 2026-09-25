@@ -1,0 +1,10 @@
+README.md
+pyproject.toml
+src/__init__.py
+src/main.py
+src/common/types.py
+src/python_remote_desktop_assistant.egg-info/PKG-INFO
+src/python_remote_desktop_assistant.egg-info/SOURCES.txt
+src/python_remote_desktop_assistant.egg-info/dependency_links.txt
+src/python_remote_desktop_assistant.egg-info/requires.txt
+src/python_remote_desktop_assistant.egg-info/top_level.txt

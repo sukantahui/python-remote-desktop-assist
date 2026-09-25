@@ -1,0 +1,45 @@
+server:
+  host: "0.0.0.0"
+  port: 8000
+  ssl_enabled: false
+  cors_origins: ["*"]
+
+streaming:
+  fps: 60
+  quality: 80
+  codec: "H264" # H264 | VP8 | VP9
+  max_bitrate_kbps: 6000
+  low_latency_mode: true
+
+host_engine:
+  capture_backend: "bettercam" # bettercam (DXGI) | mss
+  input_backend: "ctypes"      # ctypes (Win32 SendInput) | pyautogui
+  enable_audio_capture: true
+  enable_clipboard_sync: true
+  enable_file_transfer: true
+
+ai_brain:
+  default_provider: "gemini"
+  temperature: 0.1
+  max_steps_per_task: 25
+  visual_grounding:
+    engine: "rapidocr" # rapidocr | omniparser | native
+    tag_elements: true
+  gemini:
+    model: "gemini-2.5-pro"
+  claude:
+    model: "claude-3-5-sonnet-20241022"
+  voice:
+    stt_model: "base.en"
+    tts_voice: "en-US-ChristopherNeural"
+
+safety:
+  mode: "interactive" # full_auto | interactive | read_only
+  enable_privacy_masking: true
+  emergency_killswitch_key: "ctrl+shift+alt+k"
+  blacklisted_window_titles:
+    - "KeePass"
+    - "1Password"
+    - "Bitwarden"
+    - "Bank"
+    - "PayPal"
