@@ -2,6 +2,8 @@
 
 import asyncio
 import json
+import socket
+import threading
 import time
 from pathlib import Path
 from typing import Dict, List, Optional, Set
@@ -45,6 +47,69 @@ desk_registry: Dict[str, Dict] = {
         "last_seen": time.time(),
     }
 }
+
+DISCOVERY_PORT = 9002
+
+def start_lan_discovery():
+    """Broadcasts this machine's presence on LAN and listens for other Antigravity Desk instances."""
+    def _listener():
+        try:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            sock.bind(("", DISCOVERY_PORT))
+            while True:
+                try:
+                    data, addr = sock.recvfrom(2048)
+                    payload = json.loads(data.decode("utf-8"))
+                    if payload.get("service") == "antigravity_desk":
+                        peer_id = payload.get("desk_id", "")
+                        clean_id = peer_id.replace(" ", "")
+                        peer_ip = payload.get("ip") or addr[0]
+                        peer_port = payload.get("port", 8000)
+                        peer_host = payload.get("hostname", "")
+                        self_clean = config.desk_id.replace(" ", "")
+                        if clean_id and clean_id != self_clean:
+                            desk_registry[clean_id] = {
+                                "desk_id": peer_id,
+                                "ip": peer_ip,
+                                "port": peer_port,
+                                "hostname": peer_host,
+                                "lan_url": f"http://{peer_ip}:{peer_port}",
+                                "last_seen": time.time(),
+                            }
+                except Exception:
+                    pass
+        except Exception as e:
+            logger.debug(f"LAN discovery listener stopped: {e}")
+
+    def _broadcaster():
+        try:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+            while True:
+                try:
+                    msg = json.dumps({
+                        "service": "antigravity_desk",
+                        "desk_id": config.desk_id,
+                        "ip": config.local_ip,
+                        "port": config.port,
+                        "hostname": config.hostname,
+                    }).encode("utf-8")
+                    sock.sendto(msg, ("255.255.255.255", DISCOVERY_PORT))
+                except Exception:
+                    pass
+                time.sleep(3.0)
+        except Exception as e:
+            logger.debug(f"LAN discovery broadcaster stopped: {e}")
+
+    threading.Thread(target=_listener, daemon=True).start()
+    threading.Thread(target=_broadcaster, daemon=True).start()
+
+# Launch discovery in background
+try:
+    start_lan_discovery()
+except Exception:
+    pass
 
 
 class DeskRegistration(BaseModel):
@@ -166,6 +231,19 @@ async def lookup_desk(desk_id: str):
             }
         }
     raise HTTPException(status_code=404, detail=f"Desk ID '{desk_id}' not found in registry.")
+
+
+@app.get("/api/v1/rendezvous/discovered")
+async def get_discovered_desks():
+    """Returns all active remote machines discovered on the local network."""
+    now = time.time()
+    self_clean = config.desk_id.replace(" ", "")
+    active_peers = []
+    for clean_id, entry in list(desk_registry.items()):
+        if clean_id != self_clean:
+            if now - entry.get("last_seen", 0) < 30:
+                active_peers.append(entry)
+    return {"discovered": active_peers}
 
 
 def broadcast_telemetry(data: dict):

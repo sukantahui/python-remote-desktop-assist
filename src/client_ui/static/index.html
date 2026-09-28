@@ -60,7 +60,7 @@
                     <p class="card-desc">Share this 9-digit address or LAN link to allow control from another PC, laptop, or phone.</p>
                     
                     <div class="id-display-box">
-                        <span id="local-desk-id" class="desk-id">982 411 723</span>
+                        <span id="local-desk-id" class="desk-id">--- --- ---</span>
                         <button id="btn-copy-id" class="btn btn-secondary">📋 Copy ID</button>
                     </div>
 
@@ -68,7 +68,7 @@
                     <div class="lan-access-banner">
                         <div class="lan-info">
                             <span class="lan-label">🌐 LAN Access Link (Other Devices on Wi-Fi):</span>
-                            <code id="lan-url-display" class="lan-url">http://192.168.1.43:8000</code>
+                            <code id="lan-url-display" class="lan-url">Detecting LAN URL...</code>
                         </div>
                         <button id="btn-copy-lan" class="btn btn-sm btn-outline">🔗 Copy Link</button>
                     </div>
@@ -95,7 +95,7 @@
                     <p class="card-desc">Enter the 9-digit Desk ID, Local IP (e.g. <code>192.168.1.50:8000</code>), or Hostname.</p>
                     
                     <div class="connect-input-group">
-                        <input type="text" id="remote-id-input" placeholder="e.g. 982 411 723 or 192.168.1.50:8000" class="input-field id-input" value="982 411 723">
+                        <input type="text" id="remote-id-input" placeholder="e.g. 9-digit Desk ID or 192.168.1.50:8000" class="input-field id-input" value="">
                         <button id="btn-connect" class="btn btn-primary">⚡ Connect Desk</button>
                     </div>
 
@@ -113,11 +113,11 @@
             <div class="recent-sessions-section">
                 <h3>Discovered & Recent Desks</h3>
                 <div class="recent-grid" id="recent-desks-grid">
-                    <div class="recent-card" onclick="connectToDesk('982 411 723')">
+                    <div class="recent-card" id="recent-local-card" onclick="connectToLocalDesk()">
                         <div class="recent-pc-icon">💻</div>
                         <div class="recent-info">
                             <strong>This Machine (Local Loop)</strong>
-                            <span id="recent-local-info">ID: 982 411 723 • Ready</span>
+                            <span id="recent-local-info">ID: Detecting... • Ready</span>
                         </div>
                         <span class="badge badge-success">Host Online</span>
                     </div>
@@ -145,11 +145,12 @@
                         </select>
                     </div>
                     <button class="tool-btn" id="tool-view">🔍 100% Fit</button>
+                    <button class="tool-btn" id="tool-preview">👁️ Pause Mirror</button>
                     <button class="tool-btn" id="tool-keyboard">⌨️ Keyboard: ON</button>
                     <button class="tool-btn" id="tool-file">📁 Files</button>
                 </div>
                 <div class="toolbar-center">
-                    <span class="session-title" id="active-session-label">Connected: 982 411 723</span>
+                    <span class="session-title" id="active-session-label">Connected: Ready</span>
                 </div>
                 <div class="toolbar-group">
                     <button class="tool-btn btn-ai-toggle active" id="btn-toggle-ai-sidebar">🤖 AI Copilot HUD</button>
@@ -161,6 +162,20 @@
             <div class="session-workspace">
                 <!-- Video Screen Canvas -->
                 <div class="canvas-container" id="canvas-container" tabindex="0">
+                    <!-- Local Loopback Mirror Info Banner -->
+                    <div id="loopback-notice-banner" class="loopback-banner hidden">
+                        <span>⚠️ <strong>Self-View (Local Loopback):</strong> You are viewing this computer's own desktop. To control another PC or test without mirror recursion, open <code id="loopback-lan-url">http://...</code> on your other laptop or phone!</span>
+                        <button class="btn-banner-close" onclick="document.getElementById('loopback-notice-banner').classList.add('hidden')">✕</button>
+                    </div>
+
+                    <!-- Single-PC Paused Mirror Mode Card -->
+                    <div id="preview-paused-card" class="preview-paused-card hidden">
+                        <div class="pause-icon">🛡️</div>
+                        <h3>Screen Mirroring Paused</h3>
+                        <p>Screen-in-screen feedback loop has been paused for single-computer testing. AI Copilot reasoning and remote controls remain 100% operational.</p>
+                        <button id="btn-resume-preview" class="btn btn-primary">▶️ Resume Live Preview</button>
+                    </div>
+
                     <canvas id="screen-canvas"></canvas>
                     <div id="ai-gaze-pointer" class="gaze-reticle hidden"></div>
                     <div id="connection-overlay" class="connection-overlay hidden">

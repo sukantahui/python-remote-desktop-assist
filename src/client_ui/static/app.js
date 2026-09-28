@@ -6,9 +6,10 @@ let isConnected = false;
 let canvas, ctx, canvasContainer;
 let lastFrameTime = performance.now();
 let fpsCount = 0;
-let currentDeskId = "982 411 723";
+let currentDeskId = "";
 let keyboardForwarding = true;
 let localNetworkInfo = null;
+let screenPreviewPaused = false;
 
 document.addEventListener("DOMContentLoaded", () => {
     canvas = document.getElementById("screen-canvas");
@@ -25,16 +26,74 @@ async function fetchNetworkInfo() {
         const res = await fetch("/api/v1/network_info");
         if (res.ok) {
             localNetworkInfo = await res.json();
+            currentDeskId = localNetworkInfo.desk_id;
             document.getElementById("local-desk-id").innerText = localNetworkInfo.desk_id;
             document.getElementById("lan-url-display").innerText = localNetworkInfo.lan_url;
+            const loopbackUrl = document.getElementById("loopback-lan-url");
+            if (loopbackUrl) loopbackUrl.innerText = localNetworkInfo.lan_url;
             document.getElementById("telemetry-host").innerText = localNetworkInfo.hostname || "Local PC";
             const recentInfo = document.getElementById("recent-local-info");
             if (recentInfo) {
                 recentInfo.innerText = `ID: ${localNetworkInfo.desk_id} • ${localNetworkInfo.local_ip}`;
             }
+            refreshDiscoveredDesks();
         }
     } catch (e) {
         console.warn("Could not fetch network info:", e);
+    }
+}
+
+// Poll for discovered LAN peers every 4 seconds
+setInterval(refreshDiscoveredDesks, 4000);
+
+async function refreshDiscoveredDesks() {
+    try {
+        const res = await fetch("/api/v1/rendezvous/discovered");
+        if (res.ok) {
+            const data = await res.json();
+            renderDiscoveredDesks(data.discovered || []);
+        }
+    } catch (e) {
+        // Silent background polling catch
+    }
+}
+
+function renderDiscoveredDesks(desks) {
+    const grid = document.getElementById("recent-desks-grid");
+    if (!grid) return;
+
+    let html = `
+        <div class="recent-card" id="recent-local-card" onclick="connectToLocalDesk()">
+            <div class="recent-pc-icon">💻</div>
+            <div class="recent-info">
+                <strong>This Machine (Local Loop)</strong>
+                <span id="recent-local-info">ID: ${localNetworkInfo ? localNetworkInfo.desk_id : 'Detecting...'} • Ready</span>
+            </div>
+            <span class="badge badge-success">This PC</span>
+        </div>
+    `;
+
+    desks.forEach(desk => {
+        html += `
+            <div class="recent-card" onclick="connectToDesk('${desk.desk_id}')">
+                <div class="recent-pc-icon">🖥️</div>
+                <div class="recent-info">
+                    <strong>${desk.hostname || 'Remote Machine'}</strong>
+                    <span>ID: ${desk.desk_id} • ${desk.ip}:${desk.port}</span>
+                </div>
+                <span class="badge badge-primary">⚡ Connect</span>
+            </div>
+        `;
+    });
+
+    grid.innerHTML = html;
+}
+
+function connectToLocalDesk() {
+    if (localNetworkInfo && localNetworkInfo.desk_id) {
+        connectToDesk(localNetworkInfo.desk_id);
+    } else {
+        connectToDesk(window.location.host);
     }
 }
 
@@ -113,6 +172,28 @@ function setupEventListeners() {
         });
     }
 
+    // Toggle Screen Live Preview (for Single-PC testing without mirror recursion)
+    const previewBtn = document.getElementById("tool-preview");
+    const resumeBtn = document.getElementById("btn-resume-preview");
+    const pausedCard = document.getElementById("preview-paused-card");
+
+    function toggleScreenPreview(forceState = null) {
+        screenPreviewPaused = forceState !== null ? forceState : !screenPreviewPaused;
+        if (previewBtn) {
+            previewBtn.innerText = screenPreviewPaused ? "👁️ Live Mirror: OFF" : "👁️ Pause Mirror";
+        }
+        if (pausedCard) {
+            if (screenPreviewPaused) {
+                pausedCard.classList.remove("hidden");
+            } else {
+                pausedCard.classList.add("hidden");
+            }
+        }
+    }
+
+    if (previewBtn) previewBtn.addEventListener("click", () => toggleScreenPreview());
+    if (resumeBtn) resumeBtn.addEventListener("click", () => toggleScreenPreview(false));
+
     // AI Sidebar Toggle
     document.getElementById("btn-toggle-ai-sidebar").addEventListener("click", () => {
         const sidebar = document.getElementById("ai-sidebar");
@@ -167,6 +248,8 @@ function initWebSocket(customUrl = null) {
 
     ws.onmessage = async (event) => {
         if (event.data instanceof Blob) {
+            if (screenPreviewPaused) return;
+
             // Screen Frame Received (JPEG Binary)
             const imgBitmap = await createImageBitmap(event.data);
             if (canvas.width !== imgBitmap.width) {
@@ -212,6 +295,19 @@ async function connectToDesk(targetDesk) {
     document.getElementById("view-dashboard").classList.add("hidden");
     document.getElementById("view-session").classList.remove("hidden");
     
+    // Check if connecting to self (Local Loopback)
+    const cleanTargetStr = (targetDesk || "").replace(/\s+/g, "");
+    const localCleanStr = (localNetworkInfo?.desk_id || "").replace(/\s+/g, "");
+    const isLoopback = (!cleanTargetStr || cleanTargetStr === localCleanStr || cleanTargetStr.includes("localhost") || cleanTargetStr.includes("127.0.0.1") || cleanTargetStr === window.location.host);
+    const loopNotice = document.getElementById("loopback-notice-banner");
+    if (loopNotice) {
+        if (isLoopback) {
+            loopNotice.classList.remove("hidden");
+        } else {
+            loopNotice.classList.add("hidden");
+        }
+    }
+
     const overlay = document.getElementById("connection-overlay");
     if (overlay) overlay.classList.remove("hidden");
 

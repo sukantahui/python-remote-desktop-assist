@@ -6,6 +6,7 @@ import threading
 import time
 import webbrowser
 from pathlib import Path
+from typing import Optional
 
 # Add project root to sys.path
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -25,14 +26,16 @@ from src.common.config import config
 from src.common.logger import logger
 
 
-def print_banner(desk_id: str = "982 411 723", port: int = 8000):
-    lan_url = f"http://{config.local_ip}:{port}"
-    local_url = f"http://localhost:{port}"
+def print_banner(desk_id: Optional[str] = None, port: Optional[int] = None):
+    active_desk_id = desk_id or config.desk_id
+    active_port = port or config.port
+    lan_url = f"http://{config.local_ip}:{active_port}"
+    local_url = f"http://localhost:{active_port}"
     banner = f"""
 ===================================================================
    ANTIGRAVITY AI REMOTE DESKTOP (AnyDesk-Style Python Engine)
 ===================================================================
-   * Device Desk ID : \033[92m{desk_id}\033[0m
+   * Device Desk ID : \033[92m{active_desk_id}\033[0m
    * Local Machine  : \033[96m{local_url}\033[0m
    * Other Machines : \033[93m{lan_url}\033[0m (Open on phone/laptop on same Wi-Fi)
    * AI Copilot     : \033[92mReady (Multimodal 'Computer Use')\033[0m

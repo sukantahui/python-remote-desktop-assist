@@ -75,3 +75,12 @@ def test_rendezvous_registration_and_lookup():
     data = lookup_res.json()
     assert data["found"] is True
     assert data["desk"]["ip"] == "192.168.1.150"
+
+
+def test_discovered_desks_endpoint():
+    response = client.get("/api/v1/rendezvous/discovered")
+    assert response.status_code == 200
+    data = response.json()
+    assert "discovered" in data
+    assert isinstance(data["discovered"], list)
+
