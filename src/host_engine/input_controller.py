@@ -1,43 +1,63 @@
-"""Native OS Input Injection Controller (Windows ctypes & Cross-Platform)."""
+"""Native & Cross-Platform OS Input Injection Controller (Windows, macOS, Linux)."""
 
 import sys
 import time
 from typing import Optional, Tuple
 from src.common.logger import logger
 
+_PYAUTOGUI_AVAILABLE = False
+try:
+    import pyautogui
+    pyautogui.FAILSAFE = False
+    _PYAUTOGUI_AVAILABLE = True
+except Exception:
+    pass
+
 if sys.platform == "win32":
     import ctypes
     from ctypes import wintypes
-    user32 = ctypes.windll.user32
+    try:
+        user32 = ctypes.windll.user32
+        # Win32 Mouse Event Constants
+        MOUSEEVENTF_MOVE = 0x0001
+        MOUSEEVENTF_LEFTDOWN = 0x0002
+        MOUSEEVENTF_LEFTUP = 0x0004
+        MOUSEEVENTF_RIGHTDOWN = 0x0008
+        MOUSEEVENTF_RIGHTUP = 0x0010
+        MOUSEEVENTF_MIDDLEDOWN = 0x0020
+        MOUSEEVENTF_MIDDLEUP = 0x0040
+        MOUSEEVENTF_WHEEL = 0x0800
+        MOUSEEVENTF_ABSOLUTE = 0x8000
 
-    # Win32 Mouse Event Constants
-    MOUSEEVENTF_MOVE = 0x0001
-    MOUSEEVENTF_LEFTDOWN = 0x0002
-    MOUSEEVENTF_LEFTUP = 0x0004
-    MOUSEEVENTF_RIGHTDOWN = 0x0008
-    MOUSEEVENTF_RIGHTUP = 0x0010
-    MOUSEEVENTF_MIDDLEDOWN = 0x0020
-    MOUSEEVENTF_MIDDLEUP = 0x0040
-    MOUSEEVENTF_WHEEL = 0x0800
-    MOUSEEVENTF_ABSOLUTE = 0x8000
-
-    # Win32 Key Event Constants
-    KEYEVENTF_EXTENDEDKEY = 0x0001
-    KEYEVENTF_KEYUP = 0x0002
-    KEYEVENTF_UNICODE = 0x0004
+        # Win32 Key Event Constants
+        KEYEVENTF_EXTENDEDKEY = 0x0001
+        KEYEVENTF_KEYUP = 0x0002
+        KEYEVENTF_UNICODE = 0x0004
+    except Exception:
+        user32 = None
+else:
+    user32 = None
 
 
 class InputController:
-    """Controls OS mouse and keyboard inputs with native Windows ctypes calls."""
+    """Controls OS mouse and keyboard inputs across Windows, Linux, and macOS."""
 
     def __init__(self):
         self._emergency_halted = False
         self._screen_width, self._screen_height = self._get_screen_size()
 
     def _get_screen_size(self) -> Tuple[int, int]:
-        if sys.platform == "win32":
-            user32.SetProcessDPIAware()
-            return user32.GetSystemMetrics(0), user32.GetSystemMetrics(1)
+        if sys.platform == "win32" and user32:
+            try:
+                user32.SetProcessDPIAware()
+                return user32.GetSystemMetrics(0), user32.GetSystemMetrics(1)
+            except Exception:
+                pass
+        if _PYAUTOGUI_AVAILABLE:
+            try:
+                return pyautogui.size()
+            except Exception:
+                pass
         return 1920, 1080
 
     def trigger_emergency_stop(self):
@@ -54,76 +74,107 @@ class InputController:
         return px, py
 
     def move_cursor(self, norm_x: float, norm_y: float):
-        if self._emergency_halted or sys.platform != "win32":
+        if self._emergency_halted:
             return
         px, py = self._normalize_to_pixels(norm_x, norm_y)
-        user32.SetCursorPos(px, py)
+        if sys.platform == "win32" and user32:
+            user32.SetCursorPos(px, py)
+        elif _PYAUTOGUI_AVAILABLE:
+            pyautogui.moveTo(px, py)
 
     def mouse_click(self, norm_x: float, norm_y: float, button: str = "left", click_count: int = 1):
-        if self._emergency_halted or sys.platform != "win32":
+        if self._emergency_halted:
             return
         self.move_cursor(norm_x, norm_y)
         time.sleep(0.02)
+        px, py = self._normalize_to_pixels(norm_x, norm_y)
 
-        for _ in range(click_count):
-            if button == "left":
-                user32.mouse_event(MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0)
-                time.sleep(0.03)
-                user32.mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, 0)
-            elif button == "right":
-                user32.mouse_event(MOUSEEVENTF_RIGHTDOWN, 0, 0, 0, 0)
-                time.sleep(0.03)
-                user32.mouse_event(MOUSEEVENTF_RIGHTUP, 0, 0, 0, 0)
-            elif button == "middle":
-                user32.mouse_event(MOUSEEVENTF_MIDDLEDOWN, 0, 0, 0, 0)
-                time.sleep(0.03)
-                user32.mouse_event(MOUSEEVENTF_MIDDLEUP, 0, 0, 0, 0)
-            if click_count > 1:
-                time.sleep(0.08)
+        if sys.platform == "win32" and user32:
+            for _ in range(click_count):
+                if button == "left":
+                    user32.mouse_event(MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0)
+                    time.sleep(0.03)
+                    user32.mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, 0)
+                elif button == "right":
+                    user32.mouse_event(MOUSEEVENTF_RIGHTDOWN, 0, 0, 0, 0)
+                    time.sleep(0.03)
+                    user32.mouse_event(MOUSEEVENTF_RIGHTUP, 0, 0, 0, 0)
+                elif button == "middle":
+                    user32.mouse_event(MOUSEEVENTF_MIDDLEDOWN, 0, 0, 0, 0)
+                    time.sleep(0.03)
+                    user32.mouse_event(MOUSEEVENTF_MIDDLEUP, 0, 0, 0, 0)
+                if click_count > 1:
+                    time.sleep(0.08)
+        elif _PYAUTOGUI_AVAILABLE:
+            pyautogui.click(x=px, y=py, button=button, clicks=click_count)
 
     def mouse_scroll(self, clicks: int = -3):
-        if self._emergency_halted or sys.platform != "win32":
+        if self._emergency_halted:
             return
-        # WHEEL_DELTA = 120
-        delta = clicks * 120
-        user32.mouse_event(MOUSEEVENTF_WHEEL, 0, 0, delta, 0)
+        if sys.platform == "win32" and user32:
+            delta = clicks * 120
+            user32.mouse_event(MOUSEEVENTF_WHEEL, 0, 0, delta, 0)
+        elif _PYAUTOGUI_AVAILABLE:
+            pyautogui.scroll(clicks)
 
     def mouse_drag(self, start_norm: Tuple[float, float], end_norm: Tuple[float, float], duration: float = 0.5):
-        if self._emergency_halted or sys.platform != "win32":
+        if self._emergency_halted:
             return
-        self.move_cursor(start_norm[0], start_norm[1])
-        time.sleep(0.05)
-        user32.mouse_event(MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0)
-        time.sleep(0.05)
-
-        steps = 20
         sx, sy = self._normalize_to_pixels(start_norm[0], start_norm[1])
         ex, ey = self._normalize_to_pixels(end_norm[0], end_norm[1])
-        
-        for i in range(1, steps + 1):
-            curr_x = int(sx + (ex - sx) * (i / steps))
-            curr_y = int(sy + (ey - sy) * (i / steps))
-            user32.SetCursorPos(curr_x, curr_y)
-            time.sleep(duration / steps)
 
-        time.sleep(0.05)
-        user32.mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, 0)
+        if sys.platform == "win32" and user32:
+            self.move_cursor(start_norm[0], start_norm[1])
+            time.sleep(0.05)
+            user32.mouse_event(MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0)
+            time.sleep(0.05)
+            steps = 20
+            for i in range(1, steps + 1):
+                curr_x = int(sx + (ex - sx) * (i / steps))
+                curr_y = int(sy + (ey - sy) * (i / steps))
+                user32.SetCursorPos(curr_x, curr_y)
+                time.sleep(duration / steps)
+            time.sleep(0.05)
+            user32.mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, 0)
+        elif _PYAUTOGUI_AVAILABLE:
+            pyautogui.moveTo(sx, sy)
+            pyautogui.dragTo(ex, ey, duration=duration, button="left")
 
     def type_text(self, text: str):
-        if self._emergency_halted or sys.platform != "win32":
+        if self._emergency_halted or not text:
             return
-        for char in text:
-            # Send Unicode keystroke
-            code = ord(char)
-            user32.keybd_event(0, code, KEYEVENTF_UNICODE, 0)
-            time.sleep(0.01)
-            user32.keybd_event(0, code, KEYEVENTF_UNICODE | KEYEVENTF_KEYUP, 0)
-            time.sleep(0.01)
+        if sys.platform == "win32" and user32:
+            for char in text:
+                code = ord(char)
+                user32.keybd_event(0, code, KEYEVENTF_UNICODE, 0)
+                time.sleep(0.01)
+                user32.keybd_event(0, code, KEYEVENTF_UNICODE | KEYEVENTF_KEYUP, 0)
+                time.sleep(0.01)
+        elif _PYAUTOGUI_AVAILABLE:
+            pyautogui.write(text, interval=0.01)
+
+    def press_key(self, key_name: str):
+        """Presses a single functional or special key (e.g. enter, backspace, tab, esc)."""
+        if self._emergency_halted:
+            return
+        if _PYAUTOGUI_AVAILABLE:
+            try:
+                pyautogui.press(key_name.lower())
+                return
+            except Exception:
+                pass
+        logger.info(f"Pressed special key: {key_name}")
 
     def send_hotkey(self, *keys: str):
         """Sends native key combinations like Ctrl+C, Alt+Tab, etc."""
         if self._emergency_halted:
             return
+        if _PYAUTOGUI_AVAILABLE:
+            try:
+                pyautogui.hotkey(*[k.lower() for k in keys])
+                return
+            except Exception:
+                pass
         logger.info(f"Triggering hotkey: {'+'.join(keys)}")
 
 

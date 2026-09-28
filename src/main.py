@@ -10,19 +10,34 @@ from pathlib import Path
 # Add project root to sys.path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
+if hasattr(sys.stdout, "reconfigure"):
+    try:
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
+if hasattr(sys.stderr, "reconfigure"):
+    try:
+        sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
+
 from src.common.config import config
 from src.common.logger import logger
 
 
 def print_banner(desk_id: str = "982 411 723", port: int = 8000):
+    lan_url = f"http://{config.local_ip}:{port}"
+    local_url = f"http://localhost:{port}"
     banner = f"""
 ===================================================================
-   ⚡ ANTIGRAVITY AI REMOTE DESKTOP (AnyDesk-Style Python Engine)
+   ANTIGRAVITY AI REMOTE DESKTOP (AnyDesk-Style Python Engine)
 ===================================================================
-   📌 This Desk ID   : \033[92m{desk_id}\033[0m
-   🌐 Web Controller : \033[96mhttp://localhost:{port}\033[0m
-   🤖 AI Copilot     : \033[93mReady (Multimodal 'Computer Use')\033[0m
-   🛑 Emergency Stop : \033[91mEsc + Esc or Web UI Killswitch\033[0m
+   * Device Desk ID : \033[92m{desk_id}\033[0m
+   * Local Machine  : \033[96m{local_url}\033[0m
+   * Other Machines : \033[93m{lan_url}\033[0m (Open on phone/laptop on same Wi-Fi)
+   * AI Copilot     : \033[92mReady (Multimodal 'Computer Use')\033[0m
+   * Safety Guard   : \033[94m{config.safety_mode.capitalize()} Mode\033[0m
+   * Emergency Stop : \033[91mEsc + Esc or Web UI Killswitch\033[0m
 ===================================================================
 """
     print(banner)
@@ -41,7 +56,7 @@ def main():
     parser.add_argument("--port", type=int, default=config.port, help="Port to listen on (default: 8000)")
     parser.add_argument("--desk-id", type=str, default=config.desk_id, help="Custom 9-digit Desk ID")
     parser.add_argument("--no-browser", action="store_true", help="Do not automatically open browser")
-    parser.add_argument("--connect", type=str, help="Target Desk ID to connect to immediately")
+    parser.add_argument("--connect", type=str, help="Target Desk ID or IP to connect to immediately")
     args = parser.parse_args()
 
     desk_id = args.desk_id or config.desk_id
@@ -55,7 +70,7 @@ def main():
     # Launch server using uvicorn if available, or fallback
     try:
         import uvicorn
-        logger.info(f"Starting ASGI Server with Uvicorn on {args.host}:{args.port}...")
+        logger.info(f"Starting ASGI Server with Uvicorn on {args.host}:{args.port} (LAN: http://{config.local_ip}:{args.port})...")
         uvicorn.run("src.server.app:app", host=args.host, port=args.port, log_level="info", reload=False)
     except ImportError:
         logger.warning("Uvicorn not found in current environment. Please install dependencies:")

@@ -5,6 +5,7 @@ import base64
 import json
 import time
 from typing import Callable, Dict, List, Optional
+from src.common.config import config
 from src.common.logger import logger
 from src.common.types import ActionType, AIAction, RiskTier, TaskStepResult
 from src.host_engine.screen_capture import screen_capturer
@@ -15,10 +16,12 @@ class AgentOrchestrator:
     """Manages the Plan -> Observe -> Reason -> Act -> Verify OODA loop."""
 
     def __init__(self, api_key: Optional[str] = None, provider: str = "gemini"):
-        self.api_key = api_key
-        self.provider = provider
+        self.api_key = api_key or config.gemini_api_key
+        self.provider = provider or config.default_vlm_provider
         self.is_running = False
         self.telemetry_callback: Optional[Callable[[Dict], None]] = None
+        self._hitl_event: Optional[asyncio.Event] = None
+        self._hitl_approved: bool = False
 
     def set_telemetry_callback(self, callback: Callable[[Dict], None]):
         self.telemetry_callback = callback
@@ -29,6 +32,12 @@ class AgentOrchestrator:
                 self.telemetry_callback({"type": event_type, "timestamp": time.time(), "payload": data})
             except Exception as e:
                 logger.error(f"Error emitting telemetry: {e}")
+
+    def resolve_hitl(self, approved: bool):
+        """Resolves a pending Human-in-the-Loop decision."""
+        self._hitl_approved = approved
+        if self._hitl_event and not self._hitl_event.is_set():
+            self._hitl_event.set()
 
     async def execute_goal(self, goal: str, max_steps: int = 15):
         """Executes a high-level natural language goal autonomously."""
@@ -72,11 +81,22 @@ class AgentOrchestrator:
                     break
 
                 # 3. Safety Check: If high-risk, await HITL approval
-                if action.risk_tier == RiskTier.TIER_3_HIGH_RISK:
-                    logger.warning(f"[HITL] High-risk action detected: {action.action_type}. Awaiting user approval.")
-                    self._emit_telemetry("hitl_approval_required", {"step": step, "action": action.dict()})
-                    # In full flow, pause until approved
-                    await asyncio.sleep(1.5)
+                if action.risk_tier == RiskTier.TIER_3_HIGH_RISK or config.safety_mode == "interactive_strict":
+                    logger.warning(f"[HITL] Action requires confirmation: {action.action_type}. Awaiting user approval.")
+                    self._emit_telemetry("hitl_approval_required", {"step": step, "action": action.model_dump()})
+                    self._hitl_event = asyncio.Event()
+                    self._hitl_approved = False
+                    try:
+                        # Wait for user click in UI or timeout
+                        await asyncio.wait_for(self._hitl_event.wait(), timeout=30.0)
+                        if not self._hitl_approved:
+                            logger.info("[HITL] Action rejected by user.")
+                            self._emit_telemetry("hitl_rejected", {"step": step})
+                            continue
+                    except asyncio.TimeoutError:
+                        logger.warning("[HITL] Approval timed out.")
+                        self._emit_telemetry("hitl_timeout", {"step": step})
+                        continue
 
                 # 4. Act: Execute OS input
                 t0 = time.time()
@@ -107,11 +127,12 @@ class AgentOrchestrator:
 
     async def _reason_next_action(self, goal: str, history: List[Dict], frame_b64: str, step: int) -> AIAction:
         """Calls Gemini/Claude API or provides smart contextual rule-based reasoning."""
+        api_key = self.api_key or config.gemini_api_key
         # Check if Google GenAI SDK is configured with an active key
-        if self.api_key and self.api_key.strip():
+        if api_key and api_key.strip():
             try:
                 from google import genai
-                client = genai.Client(api_key=self.api_key)
+                client = genai.Client(api_key=api_key)
                 prompt = f"""You are an autonomous AI Remote Desktop Assistant.
 Goal: {goal}
 Step Number: {step}
@@ -120,11 +141,11 @@ Action History: {json.dumps(history)}
 Output JSON schema with fields:
 - thought (string rationale)
 - action_type (mouse_click | type_text | mouse_scroll | terminate)
-- parameters (dict e.g. {"point": [x, y], "text": "...", "button": "left"})
+- parameters (dict e.g. {{"point": [x, y], "text": "...", "button": "left"}})
 - is_terminal (boolean)
 """
                 response = client.models.generate_content(
-                    model="gemini-2.5-flash",
+                    model=config.gemini_model or "gemini-2.5-flash",
                     contents=[prompt, genai.types.Part.from_bytes(data=base64.b64decode(frame_b64), mime_type="image/jpeg")]
                 )
                 raw_text = response.text

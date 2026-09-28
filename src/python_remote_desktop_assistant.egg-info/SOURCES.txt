@@ -2,9 +2,16 @@ README.md
 pyproject.toml
 src/__init__.py
 src/main.py
+src/ai_brain/orchestrator.py
+src/common/config.py
+src/common/logger.py
 src/common/types.py
+src/host_engine/input_controller.py
+src/host_engine/screen_capture.py
 src/python_remote_desktop_assistant.egg-info/PKG-INFO
 src/python_remote_desktop_assistant.egg-info/SOURCES.txt
 src/python_remote_desktop_assistant.egg-info/dependency_links.txt
 src/python_remote_desktop_assistant.egg-info/requires.txt
 src/python_remote_desktop_assistant.egg-info/top_level.txt
+src/server/app.py
+src/server/rendezvous.py

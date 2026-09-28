@@ -36,24 +36,40 @@ All project documentation, user manuals, and technical specifications are organi
 ## 🛠️ Quick Start
 
 ### 1. Prerequisites
-- Python 3.10 or 3.11+
+- Python 3.10, 3.11, 3.12, or 3.13+
 - Windows 10/11, Linux, or macOS
 
-### 2. Installation
-```powershell
-# Clone and enter repository
-cd "python remote desktop assitant"
+### 2. Fast 1-Click Setup & Launch (Windows)
+```cmd
+# 1. Run Automated Setup (installs dependencies, prepares .env and .venv)
+setup.bat
 
+# 2. Launch Application
+run.bat
+```
+*(Or in PowerShell: `.\setup.ps1` followed by `.\run.ps1`)*
+
+### 3. Manual Installation & Run
+```powershell
 # Create and activate virtual environment
-py -3.10 -m venv .venv
+python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 
-# Install dependencies
+# Install dependencies and local package
 pip install -r requirements.txt
-```
+pip install -e . --no-deps
 
-### 3. Running the Application
-```powershell
+# Copy environment config
+copy .env.example .env
+
+# Run Application
 python src/main.py
 ```
 *The default browser will automatically open to `http://localhost:8000`.*
+
+### 4. Running Tests
+```powershell
+.\test.bat
+# or
+.\.venv\Scripts\pytest
+```

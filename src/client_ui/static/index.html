@@ -15,13 +15,17 @@
         <div class="nav-brand">
             <div class="logo-icon">⚡</div>
             <div class="logo-text">ANTIGRAVITY <span>DESK AI</span></div>
-            <div class="version-badge">v1.0 AnyDesk Engine</div>
+            <div class="version-badge">v1.1 Cross-Machine Engine</div>
         </div>
 
         <div class="nav-telemetry">
             <div class="pill status-pill">
-                <span class="dot pulse-green"></span>
-                <span id="telemetry-status">Online (Host Ready)</span>
+                <span class="dot pulse-green" id="telemetry-dot"></span>
+                <span id="telemetry-status">Online (Ready)</span>
+            </div>
+            <div class="pill">
+                <span class="pill-label">Host:</span>
+                <span id="telemetry-host" class="pill-val">Local PC</span>
             </div>
             <div class="pill">
                 <span class="pill-label">FPS:</span>
@@ -33,7 +37,7 @@
             </div>
             <div class="pill">
                 <span class="pill-label">🔒</span>
-                <span class="pill-val">DTLS-SRTP</span>
+                <span class="pill-val">E2E TLS</span>
             </div>
         </div>
 
@@ -53,11 +57,20 @@
                         <span class="badge badge-accent">THIS DESK</span>
                         <h2>Your Device Address</h2>
                     </div>
-                    <p class="card-desc">Share this 9-digit address to allow remote control or AI delegation on this PC.</p>
+                    <p class="card-desc">Share this 9-digit address or LAN link to allow control from another PC, laptop, or phone.</p>
                     
                     <div class="id-display-box">
                         <span id="local-desk-id" class="desk-id">982 411 723</span>
-                        <button id="btn-copy-id" class="btn btn-secondary">📋 Copy</button>
+                        <button id="btn-copy-id" class="btn btn-secondary">📋 Copy ID</button>
+                    </div>
+
+                    <!-- Multi-Machine LAN Access Link -->
+                    <div class="lan-access-banner">
+                        <div class="lan-info">
+                            <span class="lan-label">🌐 LAN Access Link (Other Devices on Wi-Fi):</span>
+                            <code id="lan-url-display" class="lan-url">http://192.168.1.43:8000</code>
+                        </div>
+                        <button id="btn-copy-lan" class="btn btn-sm btn-outline">🔗 Copy Link</button>
                     </div>
 
                     <div class="permissions-toggle-group">
@@ -79,10 +92,10 @@
                         <span class="badge badge-primary">REMOTE DESK</span>
                         <h2>Connect to Remote Machine</h2>
                     </div>
-                    <p class="card-desc">Enter the 9-digit Desk ID of the computer you want to view and automate.</p>
+                    <p class="card-desc">Enter the 9-digit Desk ID, Local IP (e.g. <code>192.168.1.50:8000</code>), or Hostname.</p>
                     
                     <div class="connect-input-group">
-                        <input type="text" id="remote-id-input" placeholder="e.g. 982 411 723" class="input-field id-input" value="982 411 723">
+                        <input type="text" id="remote-id-input" placeholder="e.g. 982 411 723 or 192.168.1.50:8000" class="input-field id-input" value="982 411 723">
                         <button id="btn-connect" class="btn btn-primary">⚡ Connect Desk</button>
                     </div>
 
@@ -98,23 +111,23 @@
 
             <!-- Recent Sessions -->
             <div class="recent-sessions-section">
-                <h3>Recent Connected Desks</h3>
-                <div class="recent-grid">
+                <h3>Discovered & Recent Desks</h3>
+                <div class="recent-grid" id="recent-desks-grid">
                     <div class="recent-card" onclick="connectToDesk('982 411 723')">
                         <div class="recent-pc-icon">💻</div>
                         <div class="recent-info">
                             <strong>This Machine (Local Loop)</strong>
-                            <span>ID: 982 411 723 • Ready</span>
+                            <span id="recent-local-info">ID: 982 411 723 • Ready</span>
                         </div>
-                        <span class="badge badge-success">Online</span>
+                        <span class="badge badge-success">Host Online</span>
                     </div>
-                    <div class="recent-card">
+                    <div class="recent-card" onclick="connectToDesk('192.168.1.50:8000')">
                         <div class="recent-pc-icon">🖥️</div>
                         <div class="recent-info">
-                            <strong>Workstation-Win11</strong>
-                            <span>ID: 412 890 125 • 24ms</span>
+                            <strong>Workstation-LAN</strong>
+                            <span>IP: 192.168.1.50:8000 • Direct</span>
                         </div>
-                        <span class="badge badge-outline">Available</span>
+                        <span class="badge badge-outline">Connect</span>
                     </div>
                 </div>
             </div>
@@ -125,13 +138,18 @@
             <!-- In-Session AnyDesk Toolbar -->
             <div class="session-toolbar">
                 <div class="toolbar-group">
-                    <button class="tool-btn" id="tool-monitors">🖥️ Monitor 1 ▾</button>
+                    <div class="select-wrapper">
+                        <select id="monitor-select" class="tool-select">
+                            <option value="1">🖥️ Primary Monitor</option>
+                            <option value="0">🖥️ All Monitors</option>
+                        </select>
+                    </div>
                     <button class="tool-btn" id="tool-view">🔍 100% Fit</button>
-                    <button class="tool-btn" id="tool-file">📁 File Manager</button>
-                    <button class="tool-btn" id="tool-actions">⚡ Actions ▾</button>
+                    <button class="tool-btn" id="tool-keyboard">⌨️ Keyboard: ON</button>
+                    <button class="tool-btn" id="tool-file">📁 Files</button>
                 </div>
                 <div class="toolbar-center">
-                    <span class="session-title" id="active-session-label">Desk: 982 411 723</span>
+                    <span class="session-title" id="active-session-label">Connected: 982 411 723</span>
                 </div>
                 <div class="toolbar-group">
                     <button class="tool-btn btn-ai-toggle active" id="btn-toggle-ai-sidebar">🤖 AI Copilot HUD</button>
@@ -142,9 +160,13 @@
             <!-- Main Session Split Area -->
             <div class="session-workspace">
                 <!-- Video Screen Canvas -->
-                <div class="canvas-container" id="canvas-container">
+                <div class="canvas-container" id="canvas-container" tabindex="0">
                     <canvas id="screen-canvas"></canvas>
                     <div id="ai-gaze-pointer" class="gaze-reticle hidden"></div>
+                    <div id="connection-overlay" class="connection-overlay hidden">
+                        <div class="spinner"></div>
+                        <p id="overlay-status-text">Connecting to remote machine...</p>
+                    </div>
                 </div>
 
                 <!-- Right-Docked AI Copilot Sidebar -->
@@ -192,6 +214,19 @@
             </div>
         </section>
     </main>
+
+    <!-- Unattended Password Modal -->
+    <div id="auth-modal" class="modal-overlay hidden">
+        <div class="glass-card modal-card">
+            <h3>🔒 Password Required</h3>
+            <p>This remote computer requires an unattended access password to connect.</p>
+            <input type="password" id="auth-password-input" class="input-field" placeholder="Enter session passcode">
+            <div class="modal-actions">
+                <button id="btn-auth-cancel" class="btn btn-secondary">Cancel</button>
+                <button id="btn-auth-submit" class="btn btn-primary">Unlock & Connect</button>
+            </div>
+        </div>
+    </div>
 
     <script src="app.js"></script>
 </body>

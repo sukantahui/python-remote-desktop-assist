@@ -29,18 +29,21 @@ Requires-Dist: pyyaml>=6.0.1
 
 ---
 
-## 📖 Authoritative Project Documentation
+## 📖 Authoritative Documentation & User Manuals
 
-All system designs, technical specifications, and architectural blueprints are organized under the [`doc/`](file:///e:/python%20remote%20desktop%20assitant/doc) folder:
+All project documentation, user manuals, and technical specifications are organized in the [`doc/`](file:///e:/python%20remote%20desktop%20assitant/doc) folder:
 
 | Document | Description |
 | :--- | :--- |
-| 🏗️ [**`doc/system_architecture.md`**](file:///e:/python%20remote%20desktop%20assitant/doc/system_architecture.md) | High-level AnyDesk topology, Rendezvous P2P/Relay server, WebRTC channels, AI OODA loop, and security architecture. |
-| 📋 [**`doc/feature_specifications.md`**](file:///e:/python%20remote%20desktop%20assitant/doc/feature_specifications.md) | Feature matrix, 9-digit Device ID, split-pane file transfer, multimodal AI autonomous agent, voice assistant, and acceptance criteria. |
-| ⚙️ [**`doc/tech_stack_and_engine.md`**](file:///e:/python%20remote%20desktop%20assitant/doc/tech_stack_and_engine.md) | Complete Python library manifest (`FastAPI`, `aiortc`, `bettercam`, `google-genai`, `pywin32`, `pydantic`), and hardware acceleration specs. |
-| 🎨 [**`doc/ui_ux_design.md`**](file:///e:/python%20remote%20desktop%20assitant/doc/ui_ux_design.md) | Cyber-Glassmorphism dark theme tokens, Home Dashboard wireframes, in-session AnyDesk floating toolbar, and AI reasoning HUD. |
-| 🧪 [**`doc/testing_and_verification.md`**](file:///e:/python%20remote%20desktop%20assitant/doc/testing_and_verification.md) | Verification pyramid, unit tests, synthetic headless OS mock harness, AI visual grounding benchmarks, and security audits. |
-| 🤖 [**`AGENTS.md`**](file:///e:/python%20remote%20desktop%20assitant/AGENTS.md) | Mandatory operating guidelines and conventions for any AI agent or developer building on this repository. |
+| 📖 [**`doc/user_manual.md`**](file:///e:/python%20remote%20desktop%20assitant/doc/user_manual.md) | **End-User Manual**: Step-by-step instructions for installation, dashboard navigation, in-session controls, voice push-to-talk, and troubleshooting. |
+| 📚 [**`doc/project_documentation.md`**](file:///e:/python%20remote%20desktop%20assitant/doc/project_documentation.md) | **Master Project Documentation**: High-level synthesis of architecture, core subsystems, module layout, and security principles. |
+| 🏗️ [**`doc/system_architecture.md`**](file:///e:/python%20remote%20desktop%20assitant/doc/system_architecture.md) | **Architecture Blueprint**: AnyDesk topology, Rendezvous P2P/Relay server, WebRTC channels, AI OODA loop, and security architecture. |
+| 📋 [**`doc/feature_specifications.md`**](file:///e:/python%20remote%20desktop%20assitant/doc/feature_specifications.md) | **Feature Matrix & Specs**: 9-digit Device ID, split-pane file transfer, multimodal AI autonomous agent, voice assistant, and acceptance criteria. |
+| ⚙️ [**`doc/tech_stack_and_engine.md`**](file:///e:/python%20remote%20desktop%20assitant/doc/tech_stack_and_engine.md) | **Pure Python Tech Stack**: Library manifest (`FastAPI`, `aiortc`, `bettercam`, `google-genai`, `pywin32`, `pydantic`), and hardware acceleration specs. |
+| 🎨 [**`doc/ui_ux_design.md`**](file:///e:/python%20remote%20desktop%20assitant/doc/ui_ux_design.md) | **Design System & Wireframes**: Cyber-Glassmorphism dark theme tokens, AnyDesk Home Dashboard, and in-session floating toolbar. |
+| 🧪 [**`doc/testing_and_verification.md`**](file:///e:/python%20remote%20desktop%20assitant/doc/testing_and_verification.md) | **Testing Strategy**: Verification pyramid, unit tests, synthetic headless OS mock harness, and VLM visual grounding benchmark suites. |
+| 🌐 [**`doc/geographical_wan_deployment.md`**](file:///e:/python%20remote%20desktop%20assitant/doc/geographical_wan_deployment.md) | **Worldwide WAN Guide**: Connecting across different countries/NATs via STUN/TURN, Cloudflare Tunnels, Tailscale, and Rendezvous servers. |
+| 🤖 [**`AGENTS.md`**](file:///e:/python%20remote%20desktop%20assitant/AGENTS.md) | **AI Agent Operating Rules**: Coding conventions, directory structure, coordinate normalization math, and Definition of Done. |
 
 ---
 
@@ -58,33 +61,40 @@ All system designs, technical specifications, and architectural blueprints are o
 ## 🛠️ Quick Start
 
 ### 1. Prerequisites
-- Python 3.11 or higher
-- Windows 10/11 (for DXGI / Win32 hardware acceleration) or Linux / macOS
+- Python 3.10, 3.11, 3.12, or 3.13+
+- Windows 10/11, Linux, or macOS
 
-### 2. Installation
-```bash
-# Clone the repository
-git clone <repo-url>
-cd "python remote desktop assitant"
+### 2. Fast 1-Click Setup & Launch (Windows)
+```cmd
+# 1. Run Automated Setup (installs dependencies, prepares .env and .venv)
+setup.bat
 
+# 2. Launch Application
+run.bat
+```
+*(Or in PowerShell: `.\setup.ps1` followed by `.\run.ps1`)*
+
+### 3. Manual Installation & Run
+```powershell
 # Create and activate virtual environment
-python -m venv venv
-.\venv\Scripts\Activate.ps1
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
 
-# Install dependencies
+# Install dependencies and local package
 pip install -r requirements.txt
-```
+pip install -e . --no-deps
 
-### 3. Configuration
-```bash
-# Copy example environment file
-cp .env.example .env
+# Copy environment config
+copy .env.example .env
 
-# Edit .env and supply your Gemini / Anthropic / OpenAI API key
-```
-
-### 4. Running the Application
-```bash
-# Launch the AnyDesk-style Remote Desktop Host & Client GUI
+# Run Application
 python src/main.py
+```
+*The default browser will automatically open to `http://localhost:8000`.*
+
+### 4. Running Tests
+```powershell
+.\test.bat
+# or
+.\.venv\Scripts\pytest
 ```
